@@ -18,6 +18,11 @@ install_service: ## Install service
 	@echo "-- enable tcpmeasurer service"
 	sudo service tcpmeasurer start && sudo systemctl enable tcpmeasurer
 
+deploy: ## Deploy systemd service
+	git pull origin master
+	sudo systemctl stop tcpmeasurer.service
+	sudo systemctl start tcpmeasurer.service
+
 lint: ## Runs linters
 	${info Running linter...}
 	@golangci-lint run ./... --new-from-rev=master

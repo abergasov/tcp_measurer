@@ -1,0 +1,11 @@
+[Unit]
+Description=measure tcp latency
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+ExecStart=/path_to_binary
+
+[Install]
+WantedBy=multi-user.target
