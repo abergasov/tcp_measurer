@@ -23,6 +23,9 @@ deploy: ## Deploy systemd service
 	sudo systemctl stop tcpmeasurer.service
 	sudo systemctl start tcpmeasurer.service
 
+logs:
+	sudo journalctl -u tcpmeasurer.service -f
+
 lint: ## Runs linters
 	${info Running linter...}
 	@golangci-lint run ./... --new-from-rev=master
