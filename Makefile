@@ -10,11 +10,10 @@ build_stratum:
 
 modify_logs:
 	@echo "Updating fluent-bit configuration..."
-	@awk '/\[INPUT\]/{print "[INPUT]\n    Name        systemd\n    Tag         service_logs\n    Systemd_Filter   _SYSTEMD_UNIT=tcpmeasurer.service\n    Read_From_Tail   On\n"$$0;next}1' /etc/fluent-bit/fluent-bit.conf > /tmp/fluent-bit.conf
+	@awk '/\[INPUT\]/{print "[INPUT]\n    Name        systemd\n    Tag         service_logs\n    Systemd_Filter   _SYSTEMD_UNIT=tcpmeasurer.service\n    Read_From_Tail   On\n\n"$$0;next}1' /etc/fluent-bit/fluent-bit.conf > /tmp/fluent-bit.conf
 	@sudo mv /tmp/fluent-bit.conf /etc/fluent-bit/fluent-bit.conf
-	#@sudo sed -i '/\[INPUT\]/a \    Name        systemd\n    Tag         service_logs\n    Systemd_Filter   _SYSTEMD_UNIT=tcpmeasurer.service\n    Read_From_Tail   On' /etc/fluent-bit/fluent-bit.conf
 	@echo "Configuration updated successfully."
-	#sudo systemctl restart fluent-bit
+	sudo systemctl restart fluent-bit
 
 install_service: ## Install service
 	@echo "-- creating service"
