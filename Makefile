@@ -15,7 +15,12 @@ modify_logs:
 	@echo "Configuration updated successfully."
 	sudo systemctl restart fluent-bit
 
-install_service: ## Install service
+create-env-coin:
+	@read -p "Enter the coin value: " coin; \
+	echo "COIN=$$coin" > ~/".env"
+	@echo ".env file created successfully."
+
+install_service: create-env-coin ## Install service
 	@echo "-- creating service"
 	sudo mkdir -p /etc/systemd/system
 	cp tcpmeasurer.service tcpmeasurer.service.local

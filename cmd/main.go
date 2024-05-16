@@ -1,27 +1,30 @@
 package main
 
 import (
+	"bitbucket.org/Taal_Orchestrator/orca-std-go/logger"
 	"context"
+	"github.com/joho/godotenv"
 	"log"
 	"log/slog"
 	tcpmeasurer "orchestrator/common/pkg/tcp_measurer"
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
-
-	"bitbucket.org/Taal_Orchestrator/orca-std-go/logger"
 )
 
 var (
-	appPortStr = "8080"
+	appPortStr  = "8080"
+	envFilePath = "/home/taal/.env"
 )
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	appLogger := newLogger()
+	envFile, _ := godotenv.Read(envFilePath)
+	appLogger := newLogger(envFile["COIN"])
 	appPort, err := strconv.Atoi(appPortStr)
 	if err != nil {
 		appLogger.Fatal("unable to parse app port", err)
@@ -45,15 +48,19 @@ func main() {
 	<-c // This blocks the main thread until an interrupt is received
 }
 
-func newLogger() logger.AppLogger {
+func newLogger(coinName string) logger.AppLogger {
 	appLogger, err := logger.NewAppSLogger(
 		&logger.Config{
 			Progname: "orca_tcp_measurer",
 		},
 		"",
+		logger.WithCoinS(strings.ToUpper(coinName)),
 	)
 	if err != nil {
 		log.Fatalf("Failed to create logger: %s", err)
+	}
+	if coinName == "" {
+		appLogger.Fatal("coin name is empty", nil)
 	}
 	return appLogger
 }
