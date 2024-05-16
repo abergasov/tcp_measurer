@@ -8,6 +8,12 @@ build_stratum:
 	@echo "-- building binary for stratum measurement"
 	CGO_ENABLED=0 go build -ldflags="-X 'main.appPortStr=3333'" -o ./bin/binary ./cmd
 
+modify_logs:
+	@echo "Updating fluent-bit configuration..."
+	@sudo sed -i '/\[INPUT\]/a \    Name        systemd\n    Tag         service_logs\n    Systemd_Filter   _SYSTEMD_UNIT=tcpmeasurer.service\n    Read_From_Tail   On' /etc/fluent-bit/fluent-bit.conf
+	@echo "Configuration updated successfully."
+	sudo systemctl restart fluent-bit
+
 install_service: ## Install service
 	@echo "-- creating service"
 	sudo mkdir -p /etc/systemd/system
@@ -17,6 +23,7 @@ install_service: ## Install service
 
 	@echo "-- enable tcpmeasurer service"
 	sudo service tcpmeasurer start && sudo systemctl enable tcpmeasurer
+	make modify_logs
 
 deploy: ## Deploy systemd service
 	git pull origin master
