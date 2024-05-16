@@ -1,6 +1,6 @@
 ### install
 ```bash
-git clone https://github.com/abergasov/tcp_measurer && cd tcp_measurer
+git clone https://github.com/abergasov/tcp_measurer && cd tcp_measurer && make install_service
 ```
 
 log collector
