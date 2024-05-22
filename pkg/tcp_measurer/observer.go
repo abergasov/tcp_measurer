@@ -2,12 +2,9 @@ package tcpmeasurer
 
 import (
 	"fmt"
-	"log/slog"
+	"orchestrator/common/pkg/utils"
 	"strings"
 	"time"
-
-	"bitbucket.org/Taal_Orchestrator/orca-std-go/entities"
-	"bitbucket.org/Taal_Orchestrator/orca-std-go/logger"
 )
 
 func (s *Service) getFromOutput() {
@@ -46,22 +43,21 @@ func (s *Service) extractFromOutput(str string) {
 	} else if _, ok := s.data[container.RemoteHost][container.AckSec]; ok {
 		// we already have Start time, so just get latency and remove it from the map
 		diff := container.EventTime.Sub(s.data[container.RemoteHost][container.AckSec].EventTime)
-		s.l.Info("miner latency",
-			logger.WithLatencyFlag(),
-			logger.WithRemoteTarget(container.RemoteHost),
-			logger.WithNetworkConnectionType(entities.MinerExchangeDataWithStratum),
-			slog.Int64("duration_ms", diff.Milliseconds()),
-			slog.Int64("duration_ns", diff.Nanoseconds()),
-			slog.Int64("duration_mcs", diff.Microseconds()),
-		)
+		time5MinAggregated := utils.RoundToNearest5Minutes(container.EventTime)
+		s.mu.Lock()
+		if _, ok = s.buffer[time5MinAggregated]; !ok {
+			s.buffer[time5MinAggregated] = make(map[string][]float64, 5_000)
+		}
+		if _, ok = s.buffer[time5MinAggregated][container.RemoteHost]; !ok {
+			s.buffer[time5MinAggregated][container.RemoteHost] = make([]float64, 0, 1_000)
+		}
+		s.buffer[time5MinAggregated][container.RemoteHost] = append(s.buffer[time5MinAggregated][container.RemoteHost], float64(diff.Milliseconds()))
+		s.mu.Unlock()
 		delete(s.data[container.RemoteHost], container.AckSec)
 	}
 }
 
 func (s *Service) ParseString(str string) (*MeasurerContainer, error) {
-	if len(str) < 26 {
-		return nil, fmt.Errorf("bad string format")
-	}
 	t, err := time.Parse("2006-01-02 15:04:05.000000", str[:26])
 	if err != nil {
 		return nil, fmt.Errorf("it is not valid time: %w", err) // ignore it if it's not a valid time

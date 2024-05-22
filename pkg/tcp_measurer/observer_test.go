@@ -17,14 +17,19 @@ import (
 
 func TestService_Start(t *testing.T) {
 	// given
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 35*time.Minute)
 	defer cancel()
 	appPort := spawnTCPServer(ctx, t)
 	go spawnClient(ctx, t, appPort)
 	go spawnClient(ctx, t, appPort)
 	go spawnClient(ctx, t, appPort)
 	appLogger := getLogger(t)
-	srv := tcpmeasurer.NewService(ctx, appLogger, uint64(appPort), tcpmeasurer.WithCustomApp("tcpdump"))
+	srv := tcpmeasurer.NewService(ctx,
+		appLogger,
+		uint64(appPort),
+		tcpmeasurer.WithCustomApp("tcpdump"),
+		//tcpmeasurer.WithDumpBufferInterval(5*time.Second),
+	)
 
 	// when
 	require.NoError(t, srv.Init())
@@ -54,7 +59,10 @@ func spawnClient(ctx context.Context, t *testing.T, port int) {
 		default:
 			userInput, errR := c.ReadString('\n')
 			require.NoError(t, errR)
-			println(userInput)
+			if userInput == "" {
+
+			}
+			//println(userInput)
 		}
 	}
 }
@@ -97,7 +105,7 @@ func handleRequest(conn net.Conn) {
 	enc := json.NewEncoder(conn)
 	defer t.Stop()
 	for range t.C {
-		println(fmt.Sprintf("Sending message %d...", counter))
+		//println(fmt.Sprintf("Sending message %d...", counter))
 		counter++
 		if err := enc.Encode(fmt.Sprintf(
 			"ping %d%s%s%s%s",

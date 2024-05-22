@@ -1,12 +1,13 @@
 package tcpmeasurer_test
 
 import (
-	"bitbucket.org/Taal_Orchestrator/orca-std-go/logger"
 	"context"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 	tcpmeasurer "orchestrator/common/pkg/tcp_measurer"
 	"testing"
+
+	"bitbucket.org/Taal_Orchestrator/orca-std-go/logger"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestService_Init(t *testing.T) {

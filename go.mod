@@ -6,6 +6,7 @@ require (
 	bitbucket.org/Taal_Orchestrator/orca-std-go v1.5.18
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
+	github.com/montanaflynn/stats v0.7.1
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
 	github.com/stretchr/testify v1.9.0
 )

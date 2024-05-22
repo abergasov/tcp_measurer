@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bitbucket.org/Taal_Orchestrator/orca-std-go/logger"
 	"context"
-	"github.com/joho/godotenv"
 	"log"
 	"log/slog"
 	tcpmeasurer "orchestrator/common/pkg/tcp_measurer"
@@ -12,6 +10,9 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	"bitbucket.org/Taal_Orchestrator/orca-std-go/logger"
+	"github.com/joho/godotenv"
 )
 
 var (
