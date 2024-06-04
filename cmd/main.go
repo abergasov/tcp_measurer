@@ -19,7 +19,6 @@ var (
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	appLogger := newLogger()
 	appPort, err := strconv.Atoi(appPortStr)
@@ -43,6 +42,9 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c // This blocks the main thread until an interrupt is received
+	appLogger.Info("app shutting down")
+	cancel()
+	srv.Stop()
 }
 
 func newLogger() logger.AppLogger {
