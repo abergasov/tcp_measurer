@@ -100,6 +100,7 @@ func (s *Service) Start() error {
 		15,             // how often rotate files
 		s.observePort,
 	)
+	s.l.Info("executor", slog.String("executor", executor))
 	cmd := exec.CommandContext(s.ctx, "/bin/sh", "-c", executor)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {

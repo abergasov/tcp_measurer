@@ -30,6 +30,7 @@ func (s *Service) DumpData() {
 }
 
 func (s *Service) DumpIt() {
+	s.l.Info("dumping data")
 	dumpBefore := utils.RoundToNearest5Minutes(utils.RemoveTimezone(time.Now()).Add(-6 * time.Minute))
 	var dumpData map[string][]float64
 	s.mu.Lock()
@@ -42,6 +43,7 @@ func (s *Service) DumpIt() {
 	}
 	s.mu.Unlock()
 	if len(dumpData) == 0 {
+		s.l.Info("no data to dump")
 		return
 	}
 
