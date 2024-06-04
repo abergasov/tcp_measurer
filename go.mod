@@ -4,6 +4,7 @@ go 1.22.3
 
 require (
 	bitbucket.org/Taal_Orchestrator/orca-std-go v1.5.18
+	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/montanaflynn/stats v0.7.1

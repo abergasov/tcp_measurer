@@ -16,7 +16,6 @@ func TestDump(t *testing.T) {
 		time.Now().Add(-5 * time.Minute):  "b",
 		time.Now():                        "c",
 	}
-	//dumpBefore := time.Now().Add(-6 * time.Minute)
 	var dumpData string
 	for key := range data {
 		if key.Before(dumpBefore) {

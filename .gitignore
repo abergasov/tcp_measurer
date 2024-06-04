@@ -1,2 +1,4 @@
 .idea/
 tcpmeasurer.service.local
+pkg/tcp_measurer/heap.prof
+pkg/tcp_measurer/cpu.prof

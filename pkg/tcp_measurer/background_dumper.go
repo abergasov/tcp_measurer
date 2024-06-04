@@ -16,20 +16,20 @@ func WithDumpBufferInterval(interval time.Duration) Opt {
 	}
 }
 
-func (s *Service) dumpData() {
+func (s *Service) DumpData() {
 	ticker := time.NewTicker(s.dumpBufferInterval)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
-			s.dumpIt()
+			s.DumpIt()
 		case <-s.ctx.Done():
 			return
 		}
 	}
 }
 
-func (s *Service) dumpIt() {
+func (s *Service) DumpIt() {
 	dumpBefore := utils.RoundToNearest5Minutes(utils.RemoveTimezone(time.Now()).Add(-6 * time.Minute))
 	var dumpData map[string][]float64
 	s.mu.Lock()
@@ -49,9 +49,19 @@ func (s *Service) dumpIt() {
 }
 
 func (s *Service) processData(dumpData map[string][]float64) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	for targetHost := range dumpData {
+		minerData, _ := s.matchedMiners[targetHost]
+		if minerData == "" {
+			continue
+		}
+		miningCoin, _ := s.matchedMinersCoin[targetHost]
 		l := s.l.With(
 			logger.WithRemoteTarget(targetHost),
+			logger.WithWorkerGroup(minerData),
+			logger.WithCoinS(miningCoin),
 			slog.Int64("total_requests", int64(len(dumpData[targetHost]))),
 		)
 		avg, err := stats.Mean(dumpData[targetHost])
