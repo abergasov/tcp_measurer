@@ -58,7 +58,7 @@ func (s *Service) checkFiles() {
 	slices.Sort(fileNames)
 	fullPath := s.filesPath + "/" + fileNames[0]
 	if err = s.ReadFilePureGO(fullPath); err != nil { // process only first file
-		s.l.Fatal("failed to read file", err, slog.String("file", fileNames[0]))
+		s.l.Error("failed to read file", err, slog.String("file", fileNames[0]))
 	}
 	if err = os.Remove(fullPath); err != nil {
 		s.l.Fatal("failed to remove file", err, slog.String("file", fileNames[0]))

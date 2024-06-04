@@ -96,8 +96,8 @@ func (s *Service) Start() error {
 		s.appName,
 		s.observeInterface,
 		strings.TrimSuffix(s.filesPath, "/"),
-		`%Y%m%d%H%M%S`, // file format, we will sort it
-		15,             // how often rotate files
+		`%Y_%m_%d_%H_%M_%S`, // file format, we will sort it
+		15,                  // how often rotate files
 		s.observePort,
 	)
 	s.l.Info("executor", slog.String("executor", executor))
