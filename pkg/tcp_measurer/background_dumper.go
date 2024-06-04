@@ -35,6 +35,7 @@ func (s *Service) DumpIt() {
 	var dumpData map[string][]float64
 	s.mu.Lock()
 	for key := range s.buffer {
+		s.l.Info("checking key", slog.String("key", key.String()))
 		if key.Before(dumpBefore) {
 			dumpData = s.buffer[key]
 			delete(s.buffer, key)
