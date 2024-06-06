@@ -32,13 +32,17 @@ func (s *Service) DumpData() {
 func (s *Service) DumpIt() {
 	s.l.Info("dumping data")
 	dumpBefore := utils.RoundToNearest5Minutes(utils.RemoveTimezone(time.Now()).Add(-6 * time.Minute))
-	var dumpData map[string][]float64
+	var (
+		dumpData map[string][]float64
+		dumpKey  time.Time
+	)
 	s.mu.Lock()
 	for key := range s.buffer {
 		s.l.Info("checking key", slog.String("key", key.String()))
 		if key.Before(dumpBefore) {
 			dumpData = s.buffer[key]
 			delete(s.buffer, key)
+			dumpKey = key
 			break
 		}
 	}
@@ -48,10 +52,10 @@ func (s *Service) DumpIt() {
 		return
 	}
 
-	s.processData(dumpData)
+	s.processData(dumpKey, dumpData)
 }
 
-func (s *Service) processData(dumpData map[string][]float64) {
+func (s *Service) processData(dumpKey time.Time, dumpData map[string][]float64) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -62,6 +66,7 @@ func (s *Service) processData(dumpData map[string][]float64) {
 		}
 		miningCoin, _ := s.matchedMinersCoin[targetHost]
 		l := s.l.With(
+			slog.String("observe_interval", dumpKey.Format(time.DateTime)),
 			logger.WithRemoteTarget(targetHost),
 			logger.WithWorkerGroup(minerData),
 			logger.WithCoinS(miningCoin),

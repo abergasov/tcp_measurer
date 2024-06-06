@@ -83,7 +83,7 @@ func (s *Service) Stop() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for key := range s.buffer {
-		s.processData(s.buffer[key])
+		s.processData(key, s.buffer[key])
 	}
 }
 
