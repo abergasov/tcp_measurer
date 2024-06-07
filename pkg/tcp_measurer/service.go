@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"bitbucket.org/Taal_Orchestrator/orca-std-go/logger"
+	"github.com/google/uuid"
 )
 
 type MeasurerContainer struct {
@@ -92,10 +93,11 @@ func (s *Service) Start() error {
 	go s.DumpData()
 
 	executor := fmt.Sprintf(
-		"sudo %s -i %s -ttttt -X -s 128 -e -w %s/caapture-%s.pcap -G %d 'tcp port %d and (tcp[tcpflags] & (tcp-syn|tcp-ack) != 0)'",
+		"sudo %s -i %s -ttttt -X -s 128 -e -w %s/caapture-%s-%s.pcap -G %d 'tcp port %d and (tcp[tcpflags] & (tcp-syn|tcp-ack) != 0)'",
 		s.appName,
 		s.observeInterface,
 		strings.TrimSuffix(s.filesPath, "/"),
+		uuid.NewString()[:5],
 		`%Y_%m_%d_%H_%M_%S`, // file format, we will sort it
 		15,                  // how often rotate files
 		s.observePort,
