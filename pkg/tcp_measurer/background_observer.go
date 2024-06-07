@@ -60,7 +60,7 @@ func (s *Service) checkFiles() {
 	if err = s.ReadFilePureGO(fullPath); err != nil { // process only first file
 		s.l.Error("failed to read file", err, slog.String("file", fileNames[0]))
 	} else {
-		s.l.Info("file processed", slog.String("file", fileNames[0]))
+		//s.l.Info("file processed", slog.String("file", fileNames[0]))
 	}
 	if err = os.Remove(fullPath); err != nil {
 		s.l.Fatal("failed to remove file", err, slog.String("file", fileNames[0]))
