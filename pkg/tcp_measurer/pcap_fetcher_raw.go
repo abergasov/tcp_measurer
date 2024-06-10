@@ -133,6 +133,9 @@ func (s *Service) ReadFilePureGO(pcapFile string) error {
 				s.matchedMiners[key] = minerData
 				s.matchedMinersCoin[key] = coinName
 				s.mu.Unlock()
+				if coinName == "" {
+					println(string(packetData[payloadStarts:]))
+				}
 			} else {
 				payloadStr := string(packetData[payloadStarts:])
 				if strings.Contains(payloadStr, "mining.authorize") ||
