@@ -142,7 +142,7 @@ func ExtractWorkerGroup(payload []byte) (workerGroup, coin string) {
 	}
 	position := 0
 	for i := range payload {
-		if i+1 > len(payload) {
+		if i+1 >= len(payload) {
 			break
 		}
 		if separator[0] == payload[i] && separator[1] == payload[i+1] {
