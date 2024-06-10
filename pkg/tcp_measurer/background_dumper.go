@@ -69,7 +69,7 @@ func (s *Service) processData(dumpKey time.Time, dumpData map[string][]float64) 
 			slog.String("observe_interval", dumpKey.Format(time.DateTime)),
 			logger.WithRemoteTarget(targetHost),
 			logger.WithWorkerGroup(minerData),
-			logger.WithCoinS(miningCoin),
+			slog.String("mining_coin", miningCoin),
 			slog.Int64("total_requests", int64(len(dumpData[targetHost]))),
 		)
 		avg, err := stats.Mean(dumpData[targetHost])
