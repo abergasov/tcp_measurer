@@ -93,7 +93,7 @@ func (s *Service) Start() error {
 	go s.DumpData()
 
 	executor := fmt.Sprintf(
-		"sudo %s -i %s -ttttt -X -s 132 -e -w %s/caapture-%s-%s.pcap -G %d 'tcp port %d and (tcp[tcpflags] & (tcp-syn|tcp-ack) != 0)'",
+		"sudo %s -i %s -ttttt -X -s 134 -e -w %s/caapture-%s-%s.pcap -G %d 'tcp port %d and (tcp[tcpflags] & (tcp-syn|tcp-ack) != 0)'",
 		s.appName,
 		s.observeInterface,
 		strings.TrimSuffix(s.filesPath, "/"),
