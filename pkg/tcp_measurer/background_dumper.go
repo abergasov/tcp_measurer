@@ -59,47 +59,56 @@ func (s *Service) processData(dumpKey time.Time, dumpData map[string][]float64) 
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
+	minerCoin := make(map[string]string, len(s.matchedMiners))
+	aggregated := make(map[string][]float64, len(dumpData))
 	for targetHost := range dumpData {
 		minerData, _ := s.matchedMiners[targetHost]
 		if minerData == "" {
 			continue
 		}
-		miningCoin, _ := s.matchedMinersCoin[targetHost]
+		minerCoin[minerData] = s.matchedMinersCoin[targetHost]
+		if _, ok := aggregated[minerData]; !ok {
+			aggregated[minerData] = make([]float64, 0, 1000)
+		}
+		aggregated[minerData] = append(aggregated[minerData], dumpData[targetHost]...)
+	}
+
+	for minerData := range aggregated {
+		miningCoin, _ := minerCoin[minerData]
 		l := s.l.With(
 			slog.String("observe_interval", dumpKey.Format(time.DateTime)),
-			logger.WithRemoteTarget(targetHost),
 			logger.WithWorkerGroup(minerData),
 			slog.String("mining_coin", miningCoin),
-			slog.Int64("total_requests", int64(len(dumpData[targetHost]))),
+			slog.Int64("total_requests", int64(len(aggregated[minerData]))),
 		)
-		avg, err := stats.Mean(dumpData[targetHost])
+		avg, err := stats.Mean(aggregated[minerData])
 		if err != nil {
 			l.Error("failed to calculate average", err)
 			continue
 		}
 
-		percent95, err := stats.Percentile(dumpData[targetHost], 95)
+		percent95, err := stats.Percentile(aggregated[minerData], 95)
 		if err != nil {
 			l.Error("failed to calculate 95 percentile", err)
 			continue
 		}
-		percent99, err := stats.Percentile(dumpData[targetHost], 99)
+		percent99, err := stats.Percentile(aggregated[minerData], 99)
 		if err != nil {
 			l.Error("failed to calculate 99 percentile", err)
 			continue
 		}
 
-		median, err := stats.Median(dumpData[targetHost])
+		median, err := stats.Median(aggregated[minerData])
 		if err != nil {
 			l.Error("failed to calculate median", err)
 			continue
 		}
-		maxL, err := stats.Max(dumpData[targetHost])
+		maxL, err := stats.Max(aggregated[minerData])
 		if err != nil {
 			l.Error("failed to calculate max", err)
 			continue
 		}
-		minL, err := stats.Min(dumpData[targetHost])
+		minL, err := stats.Min(aggregated[minerData])
 		if err != nil {
 			l.Error("failed to calculate min", err)
 			continue
