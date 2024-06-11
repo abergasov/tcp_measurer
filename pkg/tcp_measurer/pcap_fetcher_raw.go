@@ -158,6 +158,10 @@ func (s *Service) ReadFilePureGO(pcapFile string) error {
 			continue
 		}
 
+		s.mu.RLock()
+		kh, _ := s.matchedMiners[key]
+		s.mu.RUnlock()
+
 		confirmationTCP := flags&0x10 == 0x10 && flags&0x08 == 0x00 // ACK and not PSH
 		if isIncoming && confirmationTCP {
 			// 3. third request from miner to stratum - source host is miner, target is stratum, ACK, delta between 2nd request and 3rd request is latency
@@ -172,10 +176,10 @@ func (s *Service) ReadFilePureGO(pcapFile string) error {
 			if _, ok = s.buffer[time5MinAggregated]; !ok {
 				s.buffer[time5MinAggregated] = make(map[string][]float64, 5000)
 			}
-			if _, ok = s.buffer[time5MinAggregated][key]; !ok {
-				s.buffer[time5MinAggregated][key] = make([]float64, 0, 1000)
+			if _, ok = s.buffer[time5MinAggregated][kh]; !ok {
+				s.buffer[time5MinAggregated][kh] = make([]float64, 0, 1000)
 			}
-			s.buffer[time5MinAggregated][key] = append(s.buffer[time5MinAggregated][key], float64(diff.Milliseconds()))
+			s.buffer[time5MinAggregated][kh] = append(s.buffer[time5MinAggregated][kh], float64(diff.Milliseconds()))
 			s.mu.Unlock()
 			delete(s.dataSeq[key], seq)
 
