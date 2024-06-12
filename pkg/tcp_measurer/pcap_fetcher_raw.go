@@ -149,19 +149,26 @@ func (s *Service) ReadFilePureGO(pcapFile string) error {
 			continue
 		}
 
+		s.dataMUSeq.Lock()
 		if _, ok := s.dataSeq[key]; !ok {
 			s.dataSeq[key] = make(map[uint32]*MeasurerContainer, 5000)
 		}
+		s.dataMUSeq.Unlock()
+
 		if !isIncoming && dataTCP {
 			// 2. second request from stratum to miner - source host is stratum, target is miner, ACK, PSH
+			s.dataMUSeq.Lock()
 			s.dataSeq[key][ack] = mc
+			s.dataMUSeq.Unlock()
 			continue
 		}
 
 		confirmationTCP := flags&0x10 == 0x10 && flags&0x08 == 0x00 // ACK and not PSH
 		if isIncoming && confirmationTCP {
 			// 3. third request from miner to stratum - source host is miner, target is stratum, ACK, delta between 2nd request and 3rd request is latency
+			s.dataMUSeq.Lock()
 			req, ok := s.dataSeq[key][seq]
+			s.dataMUSeq.Unlock()
 			if !ok {
 				continue // abandoned package
 			}
@@ -177,15 +184,9 @@ func (s *Service) ReadFilePureGO(pcapFile string) error {
 			}
 			s.buffer[time5MinAggregated][key] = append(s.buffer[time5MinAggregated][key], float64(diff.Milliseconds()))
 			s.mu.Unlock()
+			s.dataMUSeq.Lock()
 			delete(s.dataSeq[key], seq)
-
-			// sometimes packages are lost, so we need cleanup to avoid memory leak
-			dropBefore := time.Now().Add(-1 * time.Hour)
-			for k := range s.dataSeq[key] {
-				if s.dataSeq[key][k].EventTime.Before(dropBefore) {
-					delete(s.dataSeq[key], k)
-				}
-			}
+			s.dataMUSeq.Unlock()
 		}
 	}
 	return nil

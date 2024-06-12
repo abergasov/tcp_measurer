@@ -33,10 +33,12 @@ type Service struct {
 	dataSeq            map[string]map[uint32]*MeasurerContainer // targetHost -> sequence -> time.Start and time.End
 	buffer             map[time.Time]map[string][]float64       // time5minAggregation -> targetHost -> latency
 	dumpBufferInterval time.Duration
+	cleanInterval      time.Duration
 	parseFilesInterval time.Duration
 	filesPath          string
 
 	mu                sync.RWMutex
+	dataMUSeq         sync.Mutex
 	matchedMiners     map[string]string
 	matchedMinersCoin map[string]string
 }
@@ -61,6 +63,7 @@ func NewService(ctx context.Context, l logger.AppLogger, observePort uint64, opt
 		dataSeq:            make(map[string]map[uint32]*MeasurerContainer),
 		buffer:             make(map[time.Time]map[string][]float64, 10),
 		dumpBufferInterval: 5 * time.Minute,
+		cleanInterval:      15 * time.Minute,
 		parseFilesInterval: 2 * time.Second,
 		filesPath:          "/tmp/",
 		matchedMiners:      make(map[string]string),
@@ -91,6 +94,7 @@ func (s *Service) Stop() {
 func (s *Service) Start() error {
 	go s.parsePCAPFiles()
 	go s.DumpData()
+	go s.CleanOld()
 
 	executor := fmt.Sprintf(
 		"sudo %s -i %s -ttttt -X -s 145 -e -w %s/caapture-%s-%s.pcap -G %d 'tcp port %d and (tcp[tcpflags] & (tcp-syn|tcp-ack) != 0)'",
