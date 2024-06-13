@@ -7,6 +7,7 @@ check: lint vulcheck test coverage ## Runs linters, vulnerability check, tests a
 build_stratum:
 	@echo "-- building binary for stratum measurement"
 	CGO_ENABLED=0 go build -ldflags="-X 'main.appPortStr=3333'" -o ./bin/binary ./cmd
+	CGO_ENABLED=0 go build -ldflags="-X 'main.appPortStr=3333' -X 'main.skipCMD=1'" -o ./bin/binary_noncmd ./cmd
 
 modify_logs:
 	@echo "Updating fluent-bit configuration..."

@@ -16,6 +16,7 @@ import (
 
 var (
 	appPortStr = "8080"
+	skipCMD    = "0"
 )
 
 func main() {
@@ -28,7 +29,7 @@ func main() {
 	}
 	appLogger.Info("app starting", slog.String("port", appPortStr))
 
-	srv := tcpmeasurer.NewService(ctx, appLogger, uint64(appPort))
+	srv := tcpmeasurer.NewService(ctx, appLogger, uint64(appPort), tcpmeasurer.WithSkipCMD(skipCMD))
 	if err = srv.Init(); err != nil {
 		appLogger.Fatal("unable to init service", err)
 	}

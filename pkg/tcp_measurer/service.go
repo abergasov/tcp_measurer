@@ -36,6 +36,7 @@ type Service struct {
 	cleanInterval      time.Duration
 	parseFilesInterval time.Duration
 	filesPath          string
+	skipCMD            bool
 
 	mu                sync.RWMutex
 	dataMUSeq         sync.Mutex
@@ -48,6 +49,12 @@ type Opt func(*Service)
 func WithCustomApp(appName string) Opt {
 	return func(s *Service) {
 		s.appName = appName
+	}
+}
+
+func WithSkipCMD(flag string) Opt {
+	return func(s *Service) {
+		s.skipCMD = flag == "1"
 	}
 }
 
@@ -95,7 +102,14 @@ func (s *Service) Start() error {
 	go s.parsePCAPFiles()
 	go s.DumpData()
 	go s.CleanOld()
-
+	if s.skipCMD {
+		s.l.Info("skipping CMD")
+		return nil
+	}
+	s.l.Info("starting CMD")
+	return s.RunCMD()
+}
+func (s *Service) RunCMD() error {
 	executor := fmt.Sprintf(
 		"sudo %s -i %s -ttttt -X -s 145 -e -w %s/caapture-%s-%s.pcap -G %d 'tcp port %d and (tcp[tcpflags] & (tcp-syn|tcp-ack) != 0)'",
 		s.appName,
