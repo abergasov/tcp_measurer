@@ -91,6 +91,7 @@ func (s *Service) Init() error {
 }
 
 func (s *Service) Stop() {
+	return
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for key := range s.buffer {
