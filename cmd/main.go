@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
-	"time"
 
 	"bitbucket.org/Taal_Orchestrator/orca-std-go/logger"
 )
@@ -20,7 +19,7 @@ var (
 )
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Hour)
+	ctx, cancel := context.WithCancel(context.Background())
 
 	appLogger := newLogger()
 	appPort, err := strconv.Atoi(appPortStr)
