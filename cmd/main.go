@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"log/slog"
 	tcpmeasurer "orchestrator/common/pkg/tcp_measurer"
@@ -9,6 +10,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"bitbucket.org/Taal_Orchestrator/orca-std-go/logger"
 )
@@ -32,6 +34,11 @@ func main() {
 	if err = srv.Init(); err != nil {
 		appLogger.Fatal("unable to init service", err)
 	}
+
+	go func() {
+		time.Sleep(3 * time.Hour)
+		appLogger.Fatal("app shutting down due to timeout", fmt.Errorf("timeout"))
+	}()
 
 	go func() {
 		if err = srv.Start(); err != nil {
