@@ -36,7 +36,7 @@ func main() {
 	}
 
 	go func() {
-		time.Sleep(3 * time.Hour)
+		time.Sleep(6 * time.Hour)
 		appLogger.Fatal("app shutting down due to timeout", fmt.Errorf("timeout"))
 	}()
 
