@@ -16,7 +16,7 @@ func (s *Service) CleanOld() {
 }
 
 func (s *Service) CleanIt() {
-	dropBefore := time.Now().Add(-1 * time.Hour)
+	dropBefore := time.Now().Add(-5 * time.Minute)
 	s.dataMUSeq.Lock()
 	defer s.dataMUSeq.Unlock()
 	for remoteHost := range s.dataSeq {

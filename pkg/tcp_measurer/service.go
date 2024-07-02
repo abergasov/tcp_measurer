@@ -70,7 +70,7 @@ func NewService(ctx context.Context, l logger.AppLogger, observePort uint64, opt
 		dataSeq:            make(map[string]map[uint32]*MeasurerContainer),
 		buffer:             make(map[time.Time]map[string][]float64, 10),
 		dumpBufferInterval: 5 * time.Minute,
-		cleanInterval:      15 * time.Minute,
+		cleanInterval:      5 * time.Minute,
 		parseFilesInterval: 2 * time.Second,
 		filesPath:          "/tmp/",
 		matchedMiners:      make(map[string]string),
