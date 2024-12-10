@@ -39,16 +39,29 @@ func (s *Service) ReadFilePureGO(pcapFile string) error {
 	}
 	defer file.Close()
 
-	var magicNumber uint32
-	if err = binary.Read(file, binary.BigEndian, &magicNumber); err != nil {
-		return fmt.Errorf("error reading magic number: %w", err)
+	// Skip the global header
+	fileHeader := make([]byte, 24)
+	_, err = file.Read(fileHeader)
+	if err == io.EOF {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("error reading packet header: %w", err)
 	}
 
-	// Skip the global header
-	file.Seek(24, io.SeekStart)
+	linkType := binary.BigEndian.Uint16(fileHeader[20:24])
+	// LINKTYPE_LINUX_SLL 113 - 18388
+	// LINKTYPE_LINUX_SLL2 276 - 7722
+	offset := 28
+	if linkType == 5121 {
+		offset = 32
+	}
+	//file.Seek(24, io.SeekStart)
 
+	counter := 0
 	packetHeader := make([]byte, 16)
 	for {
+		counter++
 		_, err = file.Read(packetHeader)
 		if err == io.EOF {
 			break
@@ -57,14 +70,16 @@ func (s *Service) ReadFilePureGO(pcapFile string) error {
 			return fmt.Errorf("error reading packet header: %w", err)
 		}
 
+		tsSec := binary.LittleEndian.Uint32(packetHeader[:4])
+		tsUSec := binary.LittleEndian.Uint32(packetHeader[4:8])
 		capLen := binary.LittleEndian.Uint32(packetHeader[8:12])
 		packetData := make([]byte, capLen)
 		if _, err = file.Read(packetData); err != nil {
 			return fmt.Errorf("error reading packet data: %w", err)
 		}
-
-		tsSec := binary.LittleEndian.Uint32(packetHeader[:4])
-		tsUSec := binary.LittleEndian.Uint32(packetHeader[4:8])
+		if len(packetData) < 48 {
+			continue
+		}
 
 		// packetData
 		// * Ethernet Header: 14 bytes
@@ -72,24 +87,30 @@ func (s *Service) ReadFilePureGO(pcapFile string) error {
 		//   - Source IP Address: 4 bytes
 		//   - Destination IP Address: 4 bytes
 		// * TCP Header: 20 bytes
-
 		mc := &MeasurerContainer{
 			EventTime:  time.Unix(int64(tsSec), int64(tsUSec)*1000),
-			SenderHost: net.IP(packetData[28 : 28+4]).String(),   // Source IP Address offset
-			RemoteHost: net.IP(packetData[28+4 : 28+8]).String(), // Destination IP Address offset
+			SenderHost: net.IP(packetData[offset : offset+4]).String(),   // Source IP Address offset
+			RemoteHost: net.IP(packetData[offset+4 : offset+8]).String(), // Destination IP Address offset
 		}
 
-		srcPort := binary.BigEndian.Uint16(packetData[36 : 36+2])
-		dstPort := binary.BigEndian.Uint16(packetData[36+2 : 36+4])
+		srcPort := binary.BigEndian.Uint16(packetData[offset+8 : offset+8+2])
+		dstPort := binary.BigEndian.Uint16(packetData[offset+8+2 : offset+8+4])
 		mc.RemoteHost = fmt.Sprintf("%s:%d", mc.RemoteHost, dstPort)
 		mc.SenderHost = fmt.Sprintf("%s:%d", mc.SenderHost, srcPort)
 
-		seq := binary.BigEndian.Uint32(packetData[40:44])
-		ack := binary.BigEndian.Uint32(packetData[44:48])
-		flags := packetData[47]
+		seqOffset := offset + 12
+		seq := binary.BigEndian.Uint32(packetData[seqOffset : seqOffset+4])
+		ack := binary.BigEndian.Uint32(packetData[seqOffset+4 : seqOffset+8])
 
-		flagPSN := packetData[47]&0x08 != 0
-		flagACK := packetData[47]&0x10 != 0
+		flagsOffset := seqOffset + 8
+		flags := packetData[flagsOffset : flagsOffset+2]
+
+		flagsMap, errFlag := ExtractTCPFlags(flags)
+		if errFlag != nil {
+			continue
+		}
+		flagACK := flagsMap["ACK"]
+		flagPSN := flagsMap["PSH"]
 		dataTCP := flagACK && flagPSN
 
 		isIncoming := uint64(dstPort) == s.observePort
@@ -118,7 +139,7 @@ func (s *Service) ReadFilePureGO(pcapFile string) error {
 			key = mc.SenderHost
 		}
 
-		if isIncoming && dataTCP && hasMinerIDPayload {
+		if isIncoming && hasMinerIDPayload {
 			// 1. first request from miner to stratum - we use to map miner host to the miner worker group, ignore in calculations
 			s.mu.RLock()
 			kh, _ := s.matchedMiners[key]
@@ -163,7 +184,7 @@ func (s *Service) ReadFilePureGO(pcapFile string) error {
 			continue
 		}
 
-		confirmationTCP := flags&0x10 == 0x10 && flags&0x08 == 0x00 // ACK and not PSH
+		confirmationTCP := flagACK && !flagPSN //flags&0x10 == 0x10 && flags&0x08 == 0x00 // ACK and not PSH
 		if isIncoming && confirmationTCP {
 			// 3. third request from miner to stratum - source host is miner, target is stratum, ACK, delta between 2nd request and 3rd request is latency
 			s.dataMUSeq.Lock()
@@ -190,4 +211,27 @@ func (s *Service) ReadFilePureGO(pcapFile string) error {
 		}
 	}
 	return nil
+}
+
+func ExtractTCPFlags(data []byte) (map[string]bool, error) {
+	if len(data) < 2 {
+		return nil, fmt.Errorf("data slice must be at least 2 bytes")
+	}
+
+	// Extract the second byte, which contains the TCP flags
+	tcpFlags := data[1]
+
+	// Map of TCP flags
+	flags := map[string]bool{
+		"FIN": tcpFlags&0x01 != 0,
+		"SYN": tcpFlags&0x02 != 0,
+		"RST": tcpFlags&0x04 != 0,
+		"PSH": tcpFlags&0x08 != 0,
+		"ACK": tcpFlags&0x10 != 0,
+		"URG": tcpFlags&0x20 != 0,
+		"ECE": tcpFlags&0x40 != 0,
+		"CWR": tcpFlags&0x80 != 0,
+	}
+
+	return flags, nil
 }

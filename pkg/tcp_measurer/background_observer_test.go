@@ -80,11 +80,11 @@ func TestService(t *testing.T) {
 	)
 
 	// when
-	require.NoError(t, srv.ReadFile("samples/caapture-20240531134340.pcap"))
-	require.NoError(t, srv.ReadFile("samples/caapture-20240531134355.pcap"))
-	require.NoError(t, srv.ReadFile("samples/caapture-20240531134410.pcap"))
-	require.NoError(t, srv.ReadFile("samples/caapture-20240531134425.pcap"))
-	require.NoError(t, srv.ReadFile("samples/caapture-20240531134440.pcap"))
+	require.NoError(t, srv.ReadFilePureGO("samples/caapture-20240531134340.pcap"))
+	require.NoError(t, srv.ReadFilePureGO("samples/caapture-20240531134355.pcap"))
+	require.NoError(t, srv.ReadFilePureGO("samples/caapture-20240531134410.pcap"))
+	require.NoError(t, srv.ReadFilePureGO("samples/caapture-20240531134425.pcap"))
+	require.NoError(t, srv.ReadFilePureGO("samples/caapture-20240531134440.pcap"))
 
 	// then
 	srv.DumpIt()
